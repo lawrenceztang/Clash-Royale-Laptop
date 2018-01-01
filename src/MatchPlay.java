@@ -6,32 +6,23 @@ import java.awt.Robot;
 import java.awt.Toolkit;
 import java.awt.event.InputEvent;
 import java.awt.image.BufferedImage;
-import java.sql.Time;
-import java.time.Year;
 import java.util.ArrayList;
 import java.util.Random;
 import java.util.concurrent.TimeUnit;
-
-import javax.swing.text.AbstractDocument.BranchElement;
-
-import org.tensorflow.Graph;
-import org.tensorflow.Session;
-import org.tensorflow.Tensor;
-import org.tensorflow.TensorFlow;
 
 public class MatchPlay implements Runnable {
 	static Robot robot;
 	static int height;
 	static int width;
 	static Random random;
-	final static int arenaTopx = 745;
-	final static int arenaTopy = 175;
-	final static int arenaBottomx = 1174;
-	final static int arenaBottomy = 756;
+	static int arenaTopx = 745;
+	static int arenaTopy = 175;
+	static int arenaBottomx = 1174;
+	static int arenaBottomy = 756;
 	static volatile BufferedImage image;
 	final static int DISTANCE_BETWEEN_SLOTS = 100;
-	static double ratioX = 1;
-	static double ratioY = 1;
+	static double ratioX;
+	static double ratioY;
 
 	static int towersBroken;
 
@@ -99,13 +90,8 @@ public class MatchPlay implements Runnable {
 		int green = (color & 0xff00) >> 8;
 		int red = (color & 0xff0000) >> 16;
 
-		if (red != green || green != blue) {
-			click(815, 873);
-			click(780, 380);
-			click(787, 482);
-		}
 		TimeUnit.SECONDS.sleep(1);
-		click(930, 940);
+		click(950, 940);
 	}
 
 	public static void upgradeCards() throws InterruptedException {
@@ -174,42 +160,44 @@ public class MatchPlay implements Runnable {
 						+ (arenaBottomy + arenaTopy) / 2));
 			}
 
-			int colorz = image.getRGB((int) (1166 * ratioX), (int) (973 * ratioY));
-			int bluez = colorz & 0xff;
-			int greenz = (colorz & 0xff00) >> 8;
-			int redz = (colorz & 0xff0000) >> 16;
-			if (redz > 180) {
-				selectCard(random.nextInt(4));
-				click(950, 736);
+			for (int x = -10; x < 10; x++) {
+				for (int y = -10; y < 10; y++) {
+					int colorz = image.getRGB((int) (1166 * ratioX + x), (int) (973 * ratioY + y));
+					int bluez = colorz & 0xff;
+					int greenz = (colorz & 0xff00) >> 8;
+					int redz = (colorz & 0xff0000) >> 16;
+					if (redz > 180) {
+						selectCard(random.nextInt(4));
+						click(950, 736);
+					}
+					TimeUnit.MILLISECONDS.sleep(500);
+				}
 			}
-			TimeUnit.MILLISECONDS.sleep(50);
-			if (random.nextInt(6) == 1) {
-				emote(random.nextInt(9));
-			}
-			TimeUnit.MILLISECONDS.sleep(500);
 
-			int color = image.getRGB((int) (947 * ratioX), (int) (880 * ratioY));
-			int blue = color & 0xff;
-			int green = (color & 0xff00) >> 8;
-			int red = (color & 0xff0000) >> 16;
+			for (int y = -20; y < 0; y++) {
+				int color = image.getRGB((int) (947 * ratioX), (int) (880 * ratioY + y));
+				int blue = color & 0xff;
+				int green = (color & 0xff00) >> 8;
+				int red = (color & 0xff0000) >> 16;
 
-			if (red + blue + green == 765) {
-				click(947, 880);
-				TimeUnit.SECONDS.sleep(1);
-				return;
+				if (red + blue + green == 765) {
+					click(947, 860);
+					TimeUnit.SECONDS.sleep(1);
+					return;
+				}
 			}
 
 			int color2 = image.getRGB((int) (802 * ratioX), (int) (608 * ratioY));
 			int blue2 = color2 & 0xff;
-			int green2 = (color & 0xff00) >> 8;
-			int red2 = (color & 0xff0000) >> 16;
+			int green2 = (color2 & 0xff00) >> 8;
+			int red2 = (color2 & 0xff0000) >> 16;
 
-			color = image.getRGB((int) (1119 * ratioX), (int) (607 * ratioY));
-			blue = color & 0xff;
-			green = (color & 0xff00) >> 8;
-			red = (color & 0xff0000) >> 16;
-			if (!(blue > 200)) {
-				if (!(blue2 > 200)) {
+			int color = image.getRGB((int) (1119 * ratioX), (int) (607 * ratioY));
+			int blue = color & 0xff;
+			int green = (color & 0xff00) >> 8;
+			int red = (color & 0xff0000) >> 16;
+			if (!(blue2 > 200)) {
+				if (!(blue > 200)) {
 					towersBroken = 2;
 				} else {
 					towersBroken = 1;
@@ -280,8 +268,11 @@ public class MatchPlay implements Runnable {
 	}
 
 	public static void initialize() throws AWTException, InterruptedException {
+		ratioX = (double) 1366 / (double) 1920;
+		ratioY = (double) 768 / (double) 1080;
 		random = new Random();
 		robot = new Robot();
+
 		Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
 		width = (int) screenSize.getWidth();
 		height = (int) screenSize.getHeight();
@@ -390,7 +381,7 @@ public class MatchPlay implements Runnable {
 		boolean openChest = true;
 		for (int x = 701; x < 1200; x++) {
 			for (int y = 737; y < 890; y++) {
-				int color = image.getRGB((int) (x * ratioX), (int) ( y * ratioY));
+				int color = image.getRGB((int) (x * ratioX), (int) (y * ratioY));
 				int blue = color & 0xff;
 				int green = (color & 0xff00) >> 8;
 				int red = (color & 0xff0000) >> 16;
@@ -428,6 +419,7 @@ public class MatchPlay implements Runnable {
 	}
 
 	public static void click(int x, int y) throws InterruptedException {
+
 		robot.mouseMove((int) (x * ratioX), (int) (y * ratioY));
 		robot.mousePress(InputEvent.BUTTON1_MASK);
 		TimeUnit.MILLISECONDS.sleep(100);
